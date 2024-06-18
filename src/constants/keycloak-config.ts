@@ -23,7 +23,7 @@ export const keycloak = new Keycloak({
 
 export const keycloakProviderInitConfig: Keycloak.KeycloakInitOptions = {
   onLoad: "login-required",
-  redirectUri: "https://oauth.pstmn.io/v1/callback",
+  redirectUri: "https://teste-keycloak.vercel.app",
   checkLoginIframe: false,
 };
 

@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<RouteProviderProps> = ({ children }) => {
             refreshToken: refreshTokenFromStorage ?? undefined,
             idToken: idTokenFromStorage ?? undefined,
           });
+          
           console.log(
             `User is ${authenticated ? "authenticated" : "not authenticated"}`
           );        
