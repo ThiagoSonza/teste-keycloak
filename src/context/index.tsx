@@ -1,80 +1,43 @@
-import { createContext, useEffect, ReactNode, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import {
   keycloak,
   keycloakProviderInitConfig,
 } from "../constants/keycloak-config";
-import Keycloak from "keycloak-js";
+import { AuthContextType, AuthProviderProps } from "../core/_types/auth";
+import { defaultValue } from "../constants/auth-provider";
+import { ACCESS_TOKEN, REFRESH_TOKEN, USER } from "../constants/storage";
 
-interface RouteContextType {
-  logout: () => void;
-  token?: string | undefined;
-}
+export const AuthContext = createContext<AuthContextType>(defaultValue);
 
-const defaultValue: RouteContextType = {
-  logout: () => {},
-};
-
-interface RouteProviderProps {
-  children: ReactNode;
-}
-
-export const AuthContext = createContext<RouteContextType>(defaultValue);
-
-export const AuthProvider: React.FC<RouteProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string>();
+  const [user, setUser] = useState();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const initKeycloak = async () => {
-      const tokenFromStorage = localStorage.getItem("token");
-      const refreshTokenFromStorage = localStorage.getItem("refreshToken");
-      const idTokenFromStorage = localStorage.getItem("idToken");
-
       try {
-          const keycloak = new Keycloak({
-            url: "https://keycloak-k8s.bemdev.com.br/",
-            realm: "poc-keycloak",
-            clientId: "bem-app-demo-users"
-          });
-
-          console.log(keycloak)
-
-          const authenticated = await keycloak.init({
-            ...keycloakProviderInitConfig,
-            token: tokenFromStorage ?? undefined,
-            refreshToken: refreshTokenFromStorage ?? undefined,
-            idToken: idTokenFromStorage ?? undefined,
-          });
-          
-          console.log(
-            `User is ${authenticated ? "authenticated" : "not authenticated"}`
-          );        
-
-        // const authenticated = await keycloak.init({
-        //   ...keycloakProviderInitConfig,
-        //   token: tokenFromStorage ?? undefined,
-        //   refreshToken: refreshTokenFromStorage ?? undefined,
-        //   idToken: idTokenFromStorage ?? undefined,
-        // });
-
-        console.log("authenticated->>>", authenticated);
+        const authenticated = await keycloak.init(keycloakProviderInitConfig);
 
         if (!authenticated) {
           keycloak.login();
         } else {
-          localStorage.setItem("token", keycloak?.token ?? "");
-          localStorage.setItem("refreshToken", keycloak?.refreshToken ?? "");
-          localStorage.setItem("idToken", keycloak?.idToken ?? "");
-          localStorage.setItem(
-            "username",
-            keycloak.tokenParsed?.given_name
-              ? keycloak.tokenParsed?.given_name
-              : keycloak.tokenParsed?.preferred_username
-          );
+          localStorage.setItem(ACCESS_TOKEN, keycloak?.token ?? "");
+          localStorage.setItem(REFRESH_TOKEN, keycloak?.refreshToken ?? "");
+          localStorage.setItem(USER, JSON.stringify(keycloak.tokenParsed));
 
-          setToken(keycloak?.token!);
+          setToken(keycloak?.token);
+          setUser(keycloak.tokenParsed as any);
         }
       } catch (error) {
-        console.error("Falha ao inicializar:", error);
+        localStorage.removeItem(ACCESS_TOKEN);
+        localStorage.removeItem(REFRESH_TOKEN);
+        localStorage.removeItem(USER);
+
+        setToken("");
+        setUser(undefined);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -82,15 +45,15 @@ export const AuthProvider: React.FC<RouteProviderProps> = ({ children }) => {
   }, []);
 
   const logout = () => {
-    console.log("logout");
+    setLoading(true);
     if (keycloak) {
       keycloak?.logout();
     }
   };
 
   return (
-    <AuthContext.Provider value={{ logout }}>
-      {token ? children : <></>}
+    <AuthContext.Provider value={{ logout, token, user, loading }}>
+      {children}
     </AuthContext.Provider>
   );
 };

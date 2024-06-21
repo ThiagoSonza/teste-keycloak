@@ -1,23 +1,38 @@
-import { Lock, SignOut } from "phosphor-react";
+import { Key, SignOut } from "phosphor-react";
 import { Link } from "react-router-dom";
 import "./style.css";
+import { useContext } from "react";
+import { AuthContext } from "../../context";
 
 export default function Menu() {
+  const { logout, user } = useContext(AuthContext);
+  
+  const handleLogout = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    event.preventDefault();
+    logout();
+  }
+
   return (
     <div className="menu">
       <Link to={"/"}>
-        <Lock weight="thin" size={24} />
+        <span> Clientes </span>
       </Link>
 
-      <Link to={"/private"}>
-        <Lock weight="thin" size={24} />
-      </Link>
+      <div>
+        <div className="user">
+          <span>{user?.name}</span>
+          <span>{user?.cargo ?? "-.-"}</span>
+        </div>
 
-      <hr />
+        <Link to={"https://keycloak-k8s.bemdev.com.br/realms/poc-keycloak/account/"} target="_blank">
+          <Key weight="thin" size={24} />
+        </Link>
 
-      <Link to={"/login"}>
-        <SignOut weight="thin" size={24} />
-      </Link>
+        <Link to={""} onClick={handleLogout}>
+          <SignOut weight="thin" size={24} />
+        </Link>
+      </div>
+
     </div>
   );
 }

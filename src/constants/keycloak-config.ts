@@ -1,21 +1,18 @@
-import Keycloak, { KeycloakConfig } from "keycloak-js";
+import Keycloak from "keycloak-js";
 
 const keycloakConfig = {
-  "realm": "poc-keycloak",
+  realm: "poc-keycloak",
   "auth-server-url": "https://keycloak-k8s.bemdev.com.br/",
   "ssl-required": "external",
-  "resource": "bem-app-demo-users",
+  resource: "bem-app-demo-users",
+  "public-client": true,
   "verify-token-audience": true,
-  "credentials": {
-    "secret": "NaYmldStI38S7MIeYUJnRHZyDsmCvK9A"
-  },
+  "use-resource-role-mappings": true,
   "confidential-port": 0,
-  "policy-enforcer": {
-    "credentials": {}
-  }
 };
 
 export const keycloak = new Keycloak({
+  ...keycloakConfig,
   url: keycloakConfig["auth-server-url"],
   realm: keycloakConfig["realm"],
   clientId: keycloakConfig["resource"],
@@ -23,12 +20,8 @@ export const keycloak = new Keycloak({
 
 export const keycloakProviderInitConfig: Keycloak.KeycloakInitOptions = {
   onLoad: "login-required",
-  redirectUri: "https://teste-keycloak.vercel.app",
+  redirectUri: "http://localhost:4006",
   checkLoginIframe: false,
-};
-
-export const keyCloakConfig: KeycloakConfig = {
-  url: keycloakConfig["auth-server-url"],
-  realm: keycloakConfig["realm"],
-  clientId: keycloakConfig["resource"],
+  scope: "email openid profile documentos grupos-usuarios cargo-usuario",
+  pkceMethod: "S256",
 };

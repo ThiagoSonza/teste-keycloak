@@ -1,0 +1,13 @@
+table {
+    margin-top: 4rem;
+}
+
+tbody td {
+    padding: 3px 1.5rem;
+}
+
+.buttons-actions > div {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+}

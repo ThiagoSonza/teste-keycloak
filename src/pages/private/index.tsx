@@ -1,38 +1,67 @@
 import { toast } from "react-toastify";
 import "./style.css";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import * as PocApi from "../../core/api/clientes";
+import { TClientes } from "../../core/model/clientes";
+import TabelaClientes from "./tabela-clientes";
+import { AuthContext } from "../../context";
 
 const Private = () => {
-  const [clientes, setClientes] = useState();
+  const [clientes, setClientes] = useState<TClientes[] | undefined>([]);
+  const { loading, user } = useContext(AuthContext);
 
   async function fetchClients() {
     try {
-      const response = await fetch("/api/users", {
-        headers: {
-          accept: "application/json",
-          authorization: `Bearer ${""}`,
-        },
-      });
+      const data = await PocApi.obterTodosClientes();
+      setClientes(data);
+    } catch (error) {
+      setClientes(undefined);
+      toast.error("Falha na requisição");
+    }
+  }
 
-      const data = await response.json();
-      setClientes(data)
-      
+  async function fetchClientsByFilial() {
+    try {
+      const data = await PocApi.obterTodosClientesByFilial();
+      setClientes(data!);
     } catch (error) {
       toast.error("Falha na requisição");
     }
   }
 
-  return (
-    <div>
-      <h1> Private page </h1>
-      <button onClick={fetchClients}> Carregar Lista de Clientes </button>
+  async function fetchClientsLocalidade() {
+    try {
+      const data = await PocApi.obterTodosClientesByCidade();
+      setClientes(data);
+    } catch (error) {
+      setClientes(undefined);
+      toast.error("Falha na requisição");
+    }
+  }
 
-      {clientes && (
-        <>
-          <h6>Clientes: </h6>
-          <li>{clientes}</li>
-        </>
-      )}
+  return loading ? (
+    <></>
+  ) : (
+    <div className="buttons-actions">
+      <div>
+        <button onClick={fetchClients}> Carregar Todos Clientes </button>
+        {user["grupos-acesso"]?.includes("/Setor/Diretoria") ? (
+          <></>
+        ) : (
+          <>
+            <button onClick={fetchClientsByFilial}>
+              Carregar Clientes da Filial
+            </button>
+            <button onClick={fetchClientsLocalidade}>
+              Carregar Clientes de Guaíba
+            </button>
+          </>
+        )}
+      </div>
+
+      <div>
+        <TabelaClientes data={clientes} />
+      </div>
     </div>
   );
 };
